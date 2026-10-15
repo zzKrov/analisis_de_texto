@@ -23,7 +23,6 @@ except Exception:
 
 
 def traducir_a_ingles(texto: str) -> str:
-    """Traduce a inglés para el motor de análisis de TextBlob."""
     if not texto or not texto.strip():
         return ""
     if HAS_DEEP:
@@ -55,9 +54,6 @@ def traducir_a_idioma(texto: str, target: str) -> str:
     return texto
 
 
-# -----------------------------------------------------------------------------
-# PALABRAS COMUNES / STOPWORDS
-# -----------------------------------------------------------------------------
 STOP_WORDS = set([
     "a", "al", "algo", "algunas", "algunos", "ante", "antes", "como", "con", "contra",
     "cual", "cuando", "de", "del", "desde", "donde", "durante", "e", "el", "ella",
@@ -95,149 +91,274 @@ def render_clean_html(html_str: str):
 
 
 # -----------------------------------------------------------------------------
-# CONFIGURACIÓN DE PÁGINA
+# CONFIGURACIÓN
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Analizador de Texto // Tono y Sentimiento",
+    page_title="Analizador de Texto // Tono y Emociones",
     page_icon="⚜",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
 # -----------------------------------------------------------------------------
-# ESTILOS NOIR GÓTICOS
+# ESTILOS OVER-THE-TOP: GÓTICO NOIR & NEÓN
 # -----------------------------------------------------------------------------
-NOIR_CSS = r"""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600;700&display=swap');
 
-html, body, [data-testid="stAppViewContainer"] {
-    background-color: #050608 !important;
-    color: #e5e7eb !important;
-    font-family: 'Spectral', Georgia, serif !important;
-    overflow-x: hidden;
-}
+    html, body, [data-testid="stAppViewContainer"] {
+        background: radial-gradient(circle at 50% 20%, #0d111a 0%, #05060a 60%, #020204 100%) !important;
+        color: #f1f5f9 !important;
+        font-family: 'Spectral', Georgia, serif !important;
+        overflow-x: hidden;
+    }
 
-[data-testid="stHeader"] {
-    background: transparent !important;
-}
+    [data-testid="stHeader"] {
+        background: transparent !important;
+    }
 
-.block-container {
-    max-width: 1200px !important;
-    padding-top: 2rem !important;
-    padding-bottom: 3.5rem !important;
-    margin: 0 auto !important;
-}
+    .block-container {
+        max-width: 1240px !important;
+        padding-top: 1.8rem !important;
+        padding-bottom: 3rem !important;
+    }
 
-.main-title {
-    font-family: 'Spectral', serif;
-    font-size: 2.4rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: #ffffff;
-    margin-bottom: 2px;
-}
+    /* Título con gradiente dinámico y resplandor */
+    .hero-title {
+        font-family: 'Spectral', serif;
+        font-size: 2.8rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #ffffff 10%, #ffd700 50%, #ff8800 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+        margin: 0;
+        line-height: 1.1;
+    }
 
-.main-sub {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.78rem;
-    letter-spacing: 0.15em;
-    color: #d4af37;
-    text-transform: uppercase;
-    margin-bottom: 1.5rem;
-}
+    .hero-sub {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.8rem;
+        letter-spacing: 0.15em;
+        color: #00f0ff;
+        text-transform: uppercase;
+        margin-top: 6px;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    }
 
-.noir-card {
-    background: #090b10;
-    border: 1px solid rgba(212, 175, 55, 0.22);
-    border-radius: 6px;
-    padding: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
-    margin-bottom: 14px;
-}
+    /* Tarjetas con cristal y bordes de oro reactivo */
+    .glow-card {
+        background: rgba(13, 16, 26, 0.8);
+        border: 1px solid rgba(255, 215, 0, 0.25);
+        border-radius: 12px;
+        padding: 22px;
+        backdrop-filter: blur(16px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(255, 215, 0, 0.08);
+        transition: all 0.3s ease;
+        margin-bottom: 16px;
+    }
 
-.kpi-card {
-    background: #090b10;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-top: 2px solid #d4af37;
-    border-radius: 4px;
-    padding: 14px;
-    text-align: center;
-}
+    .glow-card:hover {
+        border-color: #ffd700;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.25);
+        transform: translateY(-3px);
+    }
 
-.kpi-num {
-    font-family: 'Spectral', serif;
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #fafafa;
-}
+    /* KPIs */
+    .kpi-tile {
+        background: rgba(10, 13, 22, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-top: 3px solid #ffd700;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
 
-.kpi-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.12em;
-    color: #9ca3af;
-    text-transform: uppercase;
-    margin-top: 2px;
-}
+    .kpi-tile:hover {
+        border-color: #00f0ff;
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        transform: translateY(-2px);
+    }
 
-.stButton > button {
-    background: #0f121a !important;
-    border: 1px solid rgba(212, 175, 55, 0.35) !important;
-    border-radius: 4px !important;
-    color: #f3f4f6 !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.8rem !important;
-    padding: 8px 16px !important;
-    transition: all 0.2s ease !important;
-}
+    .kpi-val {
+        font-family: 'Spectral', serif;
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: #ffffff;
+    }
 
-.stButton > button:hover {
-    border-color: #d4af37 !important;
-    color: #d4af37 !important;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.2) !important;
-}
+    .kpi-lbl {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-top: 4px;
+    }
 
-.stTextArea textarea {
-    background: #090b10 !important;
-    border: 1px solid rgba(212, 175, 55, 0.25) !important;
-    border-radius: 4px !important;
-    color: #f3f4f6 !important;
-    font-family: 'Spectral', serif !important;
-    font-size: 1rem !important;
-    padding: 14px 16px !important;
-}
+    /* Botones reactivos */
+    .stButton > button {
+        background: linear-gradient(135deg, rgba(20, 24, 38, 0.9), rgba(10, 12, 20, 0.95)) !important;
+        border: 1.5px solid rgba(255, 215, 0, 0.35) !important;
+        border-radius: 8px !important;
+        color: #ffffff !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 0.82rem !important;
+        padding: 9px 18px !important;
+        transition: all 0.25s ease !important;
+    }
 
-.stTextArea textarea:focus {
-    border-color: #d4af37 !important;
-    box-shadow: 0 0 12px rgba(212, 175, 55, 0.2) !important;
-}
+    .stButton > button:hover {
+        border-color: #ffd700 !important;
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.5), inset 0 0 10px rgba(255, 215, 0, 0.2) !important;
+        transform: translateY(-2px) scale(1.02) !important;
+        color: #ffd700 !important;
+    }
 
-.stTabs [data-baseweb="tab-list"] {
-    gap: 8px;
-}
+    .stTextArea textarea {
+        background: rgba(8, 11, 18, 0.95) !important;
+        border: 1.5px solid rgba(255, 215, 0, 0.25) !important;
+        border-radius: 8px !important;
+        color: #ffffff !important;
+        font-family: 'Spectral', serif !important;
+        font-size: 1.05rem !important;
+        padding: 14px 18px !important;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8) !important;
+    }
 
-.stTabs [data-baseweb="tab"] {
-    background: #090b10 !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-radius: 4px !important;
-    color: #9ca3af !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.8rem !important;
-}
+    .stTextArea textarea:focus {
+        border-color: #00f0ff !important;
+        box-shadow: 0 0 20px rgba(0, 240, 255, 0.4) !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-.stTabs [aria-selected="true"] {
-    border-color: #d4af37 !important;
-    color: #d4af37 !important;
-    background: rgba(212, 175, 55, 0.08) !important;
-}
-</style>
-"""
-render_clean_html(NOIR_CSS)
+# -----------------------------------------------------------------------------
+# LIENZO INTERACTIVO: CONSTELACIÓN Y ESTELA REACTIVA
+# -----------------------------------------------------------------------------
+st.components.v1.html(
+    """
+    <script>
+    (function() {
+        const doc = window.parent.document;
+        let canvas = doc.getElementById('noir-bg-canvas');
+        if (!canvas) {
+            canvas = doc.createElement('canvas');
+            canvas.id = 'noir-bg-canvas';
+            canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:0;opacity:0.6;';
+            doc.body.prepend(canvas);
+        }
+        const ctx = canvas.getContext('2d');
+        let w = canvas.width = window.parent.innerWidth;
+        let h = canvas.height = window.parent.innerHeight;
+
+        window.parent.addEventListener('resize', () => {
+            w = canvas.width = window.parent.innerWidth;
+            h = canvas.height = window.parent.innerHeight;
+        });
+
+        const particles = [];
+        const trail = [];
+        let mouse = { x: -1000, y: -1000 };
+
+        window.parent.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            for (let i = 0; i < 2; i++) {
+                trail.push({
+                    x: e.clientX,
+                    y: e.clientY,
+                    vx: (Math.random() - 0.5) * 1.5,
+                    vy: (Math.random() - 0.5) * 1.5,
+                    life: 1.0
+                });
+            }
+        });
+
+        for (let i = 0; i < 50; i++) {
+            particles.push({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 0.4,
+                vy: (Math.random() - 0.5) * 0.4,
+                r: Math.random() * 1.8 + 0.8
+            });
+        }
+
+        function loop() {
+            ctx.clearRect(0, 0, w, h);
+
+            // Nodos
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0) p.x = w; if (p.x > w) p.x = 0;
+                if (p.y < 0) p.y = h; if (p.y > h) p.y = 0;
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffd700';
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = '#ffd700';
+                ctx.fill();
+
+                const dMouse = Math.hypot(p.x - mouse.x, p.y - mouse.y);
+                if (dMouse < 120) {
+                    ctx.beginPath();
+                    ctx.moveTo(p.x, p.y);
+                    ctx.lineTo(mouse.x, mouse.y);
+                    ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dMouse / 120})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    const p2 = particles[j];
+                    const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                    if (dist < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(p.x, p.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.strokeStyle = `rgba(255, 215, 0, ${(1 - dist / 100) * 0.25})`;
+                        ctx.lineWidth = 0.6;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Estela
+            for (let i = trail.length - 1; i >= 0; i--) {
+                const t = trail[i];
+                t.x += t.vx; t.y += t.vy;
+                t.life -= 0.03;
+                if (t.life <= 0) { trail.splice(i, 1); continue; }
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, 2 * t.life, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 240, 255, ${t.life})`;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00f0ff';
+                ctx.fill();
+            }
+            window.requestAnimationFrame(loop);
+        }
+        loop();
+    })();
+    </script>
+    """,
+    height=0,
+    width=0
+)
 
 
 # -----------------------------------------------------------------------------
-# PROCESAMIENTO
+# ANÁLISIS
 # -----------------------------------------------------------------------------
 def analizar_texto_profundo(texto_original: str):
     texto_en = traducir_a_ingles(texto_original)
@@ -285,29 +406,29 @@ def analizar_texto_profundo(texto_original: str):
         volatilidad = 0.0
 
     if polaridad >= 0.35 and subjetividad >= 0.4:
-        tono_nombre = "Motivador y Entusiasta"
-        tono_color = "#d4af37"
-        tono_desc = "Tono muy positivo con alta carga personal. Útil para animar a un equipo o presentar ideas con energía."
+        tono_nombre = "Inspirador y Persuasivo"
+        tono_color = "#ffd700"
+        tono_desc = "Tono muy positivo con alta emoción personal. Ideal para motivar equipos o presentar propuestas comerciales."
     elif polaridad >= 0.1 and subjetividad < 0.4:
-        tono_nombre = "Constructivo y Profesional"
-        tono_color = "#38bdf8"
-        tono_desc = "Equilibrio claro entre hechos objetivos y una perspectiva favorable."
+        tono_nombre = "Profesional y Constructivo"
+        tono_color = "#00f0ff"
+        tono_desc = "Enfoque claro y optimista, respaldado en hechos y con excelente balance corporativo."
     elif polaridad <= -0.25 and subjetividad >= 0.45:
-        tono_nombre = "Crítico y Contundente"
-        tono_color = "#f43f5e"
-        tono_desc = "Muestra inconformidad explícita o frustración. Conviene revisar si el objetivo es negociar."
+        tono_nombre = "Reclamo Severo / Frustración"
+        tono_color = "#ff0055"
+        tono_desc = "Carga emocional negativa alta. Expresa inconformidad frontal, enojo o desacuerdo tajante."
     elif polaridad <= -0.1 and subjetividad < 0.45:
-        tono_nombre = "Advertencia Formal"
-        tono_color = "#f59e0b"
-        tono_desc = "Señala problemas de forma sobria, cuidando las formas sin perder firmeza."
+        tono_nombre = "Observación Crítica Formal"
+        tono_color = "#ffaa00"
+        tono_desc = "Evaluación desfavorable pero explicada con sobriedad y fundamentos técnicos."
     elif subjetividad < 0.25:
-        tono_nombre = "Informativo y Neutral"
+        tono_nombre = "Reporte Técnico Objetivo"
         tono_color = "#94a3b8"
-        tono_desc = "Totalmente enfocado en datos y hechos sin opiniones personales."
+        tono_desc = "Completamente neutral y libre de opiniones personales. Óptimo para documentación y manuales."
     else:
-        tono_nombre = "Conversacional Mixto"
-        tono_color = "#a855f7"
-        tono_desc = "Combina comentarios personales con datos cotidianos de forma equilibrada."
+        tono_nombre = "Conversación Equilibrada"
+        tono_color = "#c084fc"
+        tono_desc = "Mezcla casual de impresiones personales con hechos de forma balanceada."
 
     return {
         "polaridad": polaridad,
@@ -328,29 +449,25 @@ def analizar_texto_profundo(texto_original: str):
     }
 
 
-# -----------------------------------------------------------------------------
-# GRÁFICOS
-# -----------------------------------------------------------------------------
 def plot_speedometer(valor, titulo, rango, color_linea):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=valor,
-        number={"font": {"family": "Spectral", "size": 30, "color": "#ffffff"}},
+        number={"font": {"family": "Spectral", "size": 32, "color": "#ffffff"}},
         title={"text": titulo, "font": {"family": "JetBrains Mono", "size": 12, "color": color_linea}},
         gauge={
-            "axis": {"range": rango, "tickwidth": 1, "tickcolor": "rgba(255,255,255,0.2)"},
-            "bar": {"color": color_linea, "thickness": 0.22},
-            "bgcolor": "rgba(0,0,0,0.4)",
+            "axis": {"range": rango, "tickwidth": 1, "tickcolor": "rgba(255,255,255,0.3)"},
+            "bar": {"color": color_linea, "thickness": 0.25},
+            "bgcolor": "rgba(0,0,0,0.5)",
             "borderwidth": 1,
-            "bordercolor": "rgba(255,255,255,0.08)",
-            "steps": [{"range": [rango[0], rango[1]], "color": "rgba(255, 255, 255, 0.03)"}],
+            "bordercolor": "rgba(255,255,255,0.1)",
         }
     ))
     fig.update_layout(
-        height=200,
+        height=210,
         margin=dict(l=20, r=20, t=35, b=20),
         paper_bgcolor="rgba(0,0,0,0)",
-        font={"color": "#e5e7eb"}
+        font={"color": "#e2e8f0"}
     )
     return fig
 
@@ -365,23 +482,23 @@ def plot_trayectoria_emocional(trayectoria):
         y=df["polaridad"],
         mode="lines+markers",
         name="Sentimiento",
-        line=dict(color="#d4af37", width=2, shape="spline"),
-        marker=dict(size=7, color="#d4af37", line=dict(width=1, color="#050608")),
-        hovertemplate="<b>Oración %{x}</b><br>Sentimiento: %{y:.2f}<extra></extra>"
+        line=dict(color="#00f0ff", width=3, shape="spline"),
+        marker=dict(size=8, color="#ffd700", line=dict(width=2, color="#05060a")),
+        hovertemplate="<b>Oración %{x}</b><br>Tono: %{y:.2f}<extra></extra>"
     ))
-    fig.add_hline(y=0, line_dash="dot", line_color="rgba(255,255,255,0.2)")
+    fig.add_hline(y=0, line_dash="dash", line_color="rgba(255,255,255,0.3)")
     fig.update_layout(
-        title="<b>Evolución del tono oración por oración</b>",
-        title_font=dict(family="Spectral", size=13, color="#d4af37"),
-        xaxis_title="Número de oración",
-        yaxis_title="De negativo (-1) a positivo (+1)",
+        title="<b>Evolución del Tono por Oración</b>",
+        title_font=dict(family="Spectral", size=14, color="#ffd700"),
+        xaxis_title="Secuencia de Frases",
+        yaxis_title="De Negativo (-1) a Positivo (+1)",
         height=260,
         margin=dict(l=35, r=20, t=40, b=35),
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(9, 11, 16, 0.7)",
-        font=dict(family="JetBrains Mono", color="#9ca3af", size=10),
-        xaxis=dict(gridcolor="rgba(255,255,255,0.05)", tickmode="linear"),
-        yaxis=dict(gridcolor="rgba(255,255,255,0.05)", range=[-1.05, 1.05]),
+        plot_bgcolor="rgba(10, 14, 24, 0.7)",
+        font=dict(family="JetBrains Mono", color="#94a3b8", size=10),
+        xaxis=dict(gridcolor="rgba(255,255,255,0.06)", tickmode="linear"),
+        yaxis=dict(gridcolor="rgba(255,255,255,0.06)", range=[-1.05, 1.05]),
     )
     return fig
 
@@ -402,22 +519,22 @@ def plot_radar_dimensiones(res):
         r=valores,
         theta=categorias,
         fill="toself",
-        fillcolor="rgba(212, 175, 55, 0.15)",
-        line=dict(color="#d4af37", width=1.8),
-        marker=dict(size=5, color="#f59e0b"),
+        fillcolor="rgba(255, 215, 0, 0.2)",
+        line=dict(color="#ffd700", width=2),
+        marker=dict(size=6, color="#00f0ff"),
     ))
     fig.update_layout(
         polar=dict(
-            radialaxis=dict(visible=True, range=[0, 100], gridcolor="rgba(255,255,255,0.06)", linecolor="rgba(255,255,255,0.06)"),
-            angularaxis=dict(gridcolor="rgba(255,255,255,0.06)", linecolor="rgba(255,255,255,0.06)"),
+            radialaxis=dict(visible=True, range=[0, 100], gridcolor="rgba(255,255,255,0.08)"),
+            angularaxis=dict(gridcolor="rgba(255,255,255,0.08)"),
             bgcolor="rgba(0,0,0,0)"
         ),
-        title="<b>Equilibrio del mensaje</b>",
-        title_font=dict(family="Spectral", size=13, color="#d4af37"),
+        title="<b>Equilibrio General del Mensaje</b>",
+        title_font=dict(family="Spectral", size=14, color="#ffd700"),
         height=260,
         margin=dict(l=35, r=35, t=40, b=30),
         paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="JetBrains Mono", color="#9ca3af", size=9)
+        font=dict(family="JetBrains Mono", color="#94a3b8", size=9)
     )
     return fig
 
@@ -433,116 +550,111 @@ def plot_barras_frecuencia(frecuencia_dict):
         x=conteos,
         y=palabras,
         orientation="h",
-        marker=dict(color="#c5a059", line=dict(color="#d4af37", width=1)),
-        hovertemplate="Palabra: <b>%{y}</b><br>Apariciones: %{x}<extra></extra>"
+        marker=dict(
+            color=conteos,
+            colorscale=[[0, "#00f0ff"], [1, "#ffd700"]],
+            line=dict(color="#ffffff", width=1)
+        ),
+        hovertemplate="Palabra: <b>%{y}</b><br>Frecuencia: %{x}<extra></extra>"
     ))
     fig.update_layout(
-        title="<b>Palabras más repetidas</b>",
-        title_font=dict(family="Spectral", size=13, color="#d4af37"),
+        title="<b>Palabras Más Usadas</b>",
+        title_font=dict(family="Spectral", size=14, color="#ffd700"),
         height=260,
         margin=dict(l=40, r=20, t=40, b=20),
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="JetBrains Mono", color="#9ca3af", size=10),
-        xaxis=dict(gridcolor="rgba(255,255,255,0.05)"),
+        font=dict(family="JetBrains Mono", color="#94a3b8", size=10),
+        xaxis=dict(gridcolor="rgba(255,255,255,0.06)"),
         yaxis=dict(gridcolor="rgba(255,255,255,0.0)")
     )
     return fig
 
 
-# -----------------------------------------------------------------------------
-# EJEMPLOS PREDEFINIDOS
-# -----------------------------------------------------------------------------
 PRESETS = {
     "pitch": (
-        "¡Equipo, logramos un resultado excelente este trimestre! Superamos las metas "
-        "gracias al trabajo constante de todos. Esto demuestra que la estrategia elegida fue la correcta. "
-        "Sigamos con este mismo impulso para cerrar el año con fuerza."
+        "¡Equipo, logramos un resultado extraordinario este trimestre! Superamos todas las proyecciones "
+        "gracias a su dedicación y constancia. Esto confirma que la visión que trazamos es la correcta. "
+        "Sigamos acelerando con este mismo entusiasmo para liderar nuestro sector."
     ),
     "crisis": (
-        "Lamentamos profundamente los fallos del sistema durante la mañana de hoy. "
-        "Sabemos los inconvenientes que esto causó y asumimos la responsabilidad. "
-        "El equipo técnico ya aplicó una corrección y monitorea la estabilidad del servicio. "
-        "Mantendremos informados a todos en tiempo real."
+        "Lamentamos profundamente los fallos técnicos ocurridos durante la mañana de hoy. "
+        "Reconocemos el impacto negativo para nuestros clientes y asumimos total responsabilidad. "
+        "El equipo implementó un plan de contingencia inmediato y auditorías continuas para resolverlo. "
+        "Mantendremos informada a la comunidad con absoluta transparencia."
     ),
     "reclamo": (
-        "Llevo dos semanas esperando una respuesta y nadie me da una solución clara. "
-        "El producto llegó defectuoso y la atención al cliente fue muy deficiente. "
-        "Necesito el cambio del producto o la devolución inmediata de mi dinero hoy mismo."
+        "Estoy muy molesto con la mala atención recibida. Es inaceptable que tras dos semanas de retraso "
+        "nadie brinde una respuesta clara ni una solución concreta. El producto llegó defectuoso "
+        "y el servicio al cliente fue pésimo. Exijo el reembolso de mi dinero hoy mismo."
     ),
     "tecnico": (
-        "La base de datos procesa las peticiones de forma asíncrona mediante una cola de mensajes. "
-        "El tiempo de respuesta promedio es de doce milisegundos en condiciones normales. "
-        "El consumo de memoria se mantiene en el setenta por ciento y los respaldos se generan cada seis horas."
+        "El sistema distribuye paquetes mediante una cola asíncrona de mensajes. "
+        "La latencia promedio registrada en los nodos perimetrales se mantiene en doce milisegundos. "
+        "El consumo de memoria permanece estable bajo una carga operativa del setenta por ciento. "
+        "Las copias de seguridad se generan automáticamente cada seis horas."
     )
 }
 
 if "texto_activo" not in st.session_state:
     st.session_state.texto_activo = PRESETS["pitch"]
 
-
 def cargar_preset(key):
     st.session_state.texto_activo = PRESETS[key]
 
 
 # -----------------------------------------------------------------------------
-# ENCABEZADO
+# INTERFAZ
 # -----------------------------------------------------------------------------
 render_clean_html(
     """
-    <div style="margin-bottom: 20px;">
-        <div class="main-title">Analizador de Tono y Emociones</div>
-        <div class="main-sub">Diagnóstico de actitud, claridad y vocabulario en textos</div>
+    <div>
+        <h1 class="hero-title">Analizador de Texto // Tono y Emociones</h1>
+        <div class="hero-sub">Evaluación directa de actitud, claridad y vocabulario en cualquier mensaje</div>
     </div>
     """
 )
 
-st.markdown("<p style='font-size:0.85rem; color:#9ca3af; margin-bottom:8px;'>Prueba con un texto de ejemplo:</p>", unsafe_allow_html=True)
-
-col_p1, col_p2, col_p3, col_p4 = st.columns(4)
-with col_p1:
-    if st.button("Mensaje de motivación", use_container_width=True):
+st.markdown("<p style='font-size:0.85rem; color:#94a3b8; margin-bottom:8px;'>Prueba con un caso rápido:</p>", unsafe_allow_html=True)
+c_p1, c_p2, c_p3, c_p4 = st.columns(4)
+with c_p1:
+    if st.button("🚀 Motivación / Pitch", use_container_width=True):
         cargar_preset("pitch")
         st.rerun()
-with col_p2:
-    if st.button("Manejo de crisis", use_container_width=True):
+with c_p2:
+    if st.button("⚠️ Manejo de Crisis", use_container_width=True):
         cargar_preset("crisis")
         st.rerun()
-with col_p3:
-    if st.button("Reclamo directo", use_container_width=True):
+with c_p3:
+    if st.button("🛑 Reclamo Fuerte", use_container_width=True):
         cargar_preset("reclamo")
         st.rerun()
-with col_p4:
-    if st.button("Reporte técnico", use_container_width=True):
+with c_p4:
+    if st.button("📋 Reporte Técnico", use_container_width=True):
         cargar_preset("tecnico")
         st.rerun()
 
 st.write("")
+col_in, col_opts = st.columns([3.2, 1], gap="medium")
 
-# -----------------------------------------------------------------------------
-# ENTRADA
-# -----------------------------------------------------------------------------
-col_input_txt, col_opciones = st.columns([3.2, 1], gap="medium")
-
-with col_input_txt:
+with col_in:
     texto_usuario = st.text_area(
-        label="Escribe o pega aquí el texto a analizar:",
+        label="Escribe o pega aquí el texto a evaluar:",
         value=st.session_state.texto_activo,
         height=160,
-        placeholder="Escribe tu mensaje, correo o comunicado aquí...",
+        placeholder="Pega un correo, discurso, artículo o reclamo..."
     )
 
-with col_opciones:
-    st.markdown('<div class="noir-card" style="padding: 14px;">', unsafe_allow_html=True)
-    st.markdown("<p style='font-size:0.75rem; color:#d4af37; margin:0 0 6px 0; font-family:JetBrains Mono;'>ORIGEN</p>", unsafe_allow_html=True)
+with col_opts:
+    st.markdown('<div class="glow-card" style="padding: 16px;">', unsafe_allow_html=True)
+    st.markdown("<p style='font-size:0.75rem; color:#ffd700; margin:0 0 8px 0; font-family:JetBrains Mono;'>ORIGEN</p>", unsafe_allow_html=True)
     modo_subida = st.radio("Fuente:", ["Escribir texto", "Subir archivo"], horizontal=True, label_visibility="collapsed")
-
     archivo_subido = None
     if modo_subida == "Subir archivo":
         archivo_subido = st.file_uploader("Archivo (.txt, .md, .csv)", type=["txt", "md", "csv"])
 
     target_lang = st.selectbox(
-        label="Traducir frases a:",
+        label="Traducir oraciones a:",
         options=["en", "es", "fr", "ja", "de", "it", "pt"],
         format_func=lambda c: {"en": "Inglés", "es": "Español", "fr": "Francés", "ja": "Japonés", "de": "Alemán", "it": "Italiano", "pt": "Portugués"}.get(c, c),
         index=0
@@ -553,169 +665,145 @@ if archivo_subido is not None:
     try:
         texto_usuario = archivo_subido.getvalue().decode("utf-8")
     except Exception as e:
-        st.error(f"No se pudo leer el archivo: {e}")
+        st.error(f"Error al leer archivo: {e}")
 
-# -----------------------------------------------------------------------------
-# RESULTADOS
-# -----------------------------------------------------------------------------
 if texto_usuario and len(texto_usuario.strip()) > 3:
-    with st.spinner("Revisando texto..."):
+    with st.spinner("Procesando tono y vocabulario..."):
         res = analizar_texto_profundo(texto_usuario)
 
     render_clean_html(
         f"""
-        <div class="noir-card" style="border-left: 4px solid {res['tono_color']};">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <span style="font-family: 'JetBrains Mono'; font-size: 0.72rem; color: {res['tono_color']}; text-transform: uppercase;">
-                    Diagnóstico principal
+        <div class="glow-card" style="border-left: 5px solid {res['tono_color']};">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <span style="font-family:'JetBrains Mono'; font-size:0.75rem; color:{res['tono_color']}; letter-spacing:1px; text-transform:uppercase;">
+                    DIAGNÓSTICO PRINCIPAL
                 </span>
-                <span style="font-family: 'JetBrains Mono'; font-size: 0.72rem; color: #9ca3af;">
-                    Variación de ánimo: {res['volatilidad']}
+                <span style="font-family:'JetBrains Mono'; font-size:0.75rem; color:#94a3b8; background:rgba(0,0,0,0.5); padding:3px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.1);">
+                    Variación emocional: {res['volatilidad']}
                 </span>
             </div>
-            <h2 style="font-family: 'Spectral'; font-size: 1.7rem; margin: 0 0 4px 0; color: #ffffff;">
+            <h2 style="font-family:'Spectral'; font-size:1.8rem; margin:0 0 6px 0; color:#ffffff;">
                 {res['tono_nombre']}
             </h2>
-            <p style="color: #cbd5e1; font-size: 0.95rem; margin: 0;">
+            <p style="color:#cbd5e1; font-size:0.95rem; margin:0; line-height:1.5;">
                 {res['tono_desc']}
             </p>
         </div>
         """
     )
 
-    min_lectura = res["tiempo_lectura_seg"] // 60
-    seg_lectura = res["tiempo_lectura_seg"] % 60
-    min_oratoria = res["tiempo_oratoria_seg"] // 60
-    seg_oratoria = res["tiempo_oratoria_seg"] % 60
+    min_l = res["tiempo_lectura_seg"] // 60
+    seg_l = res["tiempo_lectura_seg"] % 60
+    min_o = res["tiempo_oratoria_seg"] // 60
+    seg_o = res["tiempo_oratoria_seg"] % 60
 
-    kpi_cols = st.columns(5)
-    with kpi_cols[0]:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-num">{res["total_palabras"]}</div><div class="kpi-label">Palabras totales</div></div>', unsafe_allow_html=True)
-    with kpi_cols[1]:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-num">{res["diversidad_lexica"]}%</div><div class="kpi-label">Variedad de palabras</div></div>', unsafe_allow_html=True)
-    with kpi_cols[2]:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-num">{len(res["trayectoria"])}</div><div class="kpi-label">Oraciones analizadas</div></div>', unsafe_allow_html=True)
-    with kpi_cols[3]:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-num">{min_lectura}m {seg_lectura}s</div><div class="kpi-label">Tiempo de lectura</div></div>', unsafe_allow_html=True)
-    with kpi_cols[4]:
-        st.markdown(f'<div class="kpi-card"><div class="kpi-num">{min_oratoria}m {seg_oratoria}s</div><div class="kpi-label">Tiempo al hablar</div></div>', unsafe_allow_html=True)
+    k_cols = st.columns(5)
+    with k_cols[0]:
+        st.markdown(f'<div class="kpi-tile"><div class="kpi-val">{res["total_palabras"]}</div><div class="kpi-lbl">Palabras</div></div>', unsafe_allow_html=True)
+    with k_cols[1]:
+        st.markdown(f'<div class="kpi-tile"><div class="kpi-val">{res["diversidad_lexica"]}%</div><div class="kpi-lbl">Vocabulario Único</div></div>', unsafe_allow_html=True)
+    with k_cols[2]:
+        st.markdown(f'<div class="kpi-tile"><div class="kpi-val">{len(res["trayectoria"])}</div><div class="kpi-lbl">Oraciones</div></div>', unsafe_allow_html=True)
+    with k_cols[3]:
+        st.markdown(f'<div class="kpi-tile"><div class="kpi-val">{min_l}m {seg_l}s</div><div class="kpi-lbl">Lectura</div></div>', unsafe_allow_html=True)
+    with k_cols[4]:
+        st.markdown(f'<div class="kpi-tile"><div class="kpi-val">{min_o}m {seg_o}s</div><div class="kpi-lbl">Al Hablar</div></div>', unsafe_allow_html=True)
 
     st.write("")
+    tab_g, tab_f, tab_s = st.tabs(["Telemetría y Gráficos", "Frase por Frase y Traducción", "Sugerencias Prácticas"])
 
-    tab_graficos, tab_oraciones, tab_coaching = st.tabs([
-        "Gráficos de resumen",
-        "Oración por oración",
-        "Sugerencias de redacción"
-    ])
-
-    with tab_graficos:
-        col_g1, col_g2 = st.columns(2)
-        with col_g1:
-            st.markdown('<div class="noir-card">', unsafe_allow_html=True)
-            pol_color = "#38bdf8" if res["polaridad"] > 0.05 else ("#f43f5e" if res["polaridad"] < -0.05 else "#d4af37")
-            fig_pol = plot_speedometer(res["polaridad"], "Sentimiento (-1 negativo, +1 positivo)", [-1, 1], pol_color)
-            st.plotly_chart(fig_pol, use_container_width=True, config={"displayModeBar": False})
+    with tab_g:
+        g1, g2 = st.columns(2)
+        with g1:
+            st.markdown('<div class="glow-card">', unsafe_allow_html=True)
+            p_col = "#00f0ff" if res["polaridad"] > 0.05 else ("#ff0055" if res["polaridad"] < -0.05 else "#ffd700")
+            st.plotly_chart(plot_speedometer(res["polaridad"], "Sentimiento (-1 negativo a +1 positivo)", [-1, 1], p_col), use_container_width=True, config={"displayModeBar": False})
+            st.markdown("</div>", unsafe_allow_html=True)
+        with g2:
+            st.markdown('<div class="glow-card">', unsafe_allow_html=True)
+            s_col = "#c084fc" if res["subjetividad"] > 0.5 else "#ffd700"
+            st.plotly_chart(plot_speedometer(res["subjetividad"], "Subjetividad (0 objetivo a 1 opinión)", [0, 1], s_col), use_container_width=True, config={"displayModeBar": False})
             st.markdown("</div>", unsafe_allow_html=True)
 
-        with col_g2:
-            st.markdown('<div class="noir-card">', unsafe_allow_html=True)
-            sub_color = "#a855f7" if res["subjetividad"] > 0.5 else "#d4af37"
-            fig_sub = plot_speedometer(res["subjetividad"], "Subjetividad (0 objetivo, 1 opinión)", [0, 1], sub_color)
-            st.plotly_chart(fig_sub, use_container_width=True, config={"displayModeBar": False})
-            st.markdown("</div>", unsafe_allow_html=True)
-
-        st.markdown('<div class="noir-card">', unsafe_allow_html=True)
-        fig_tray = plot_trayectoria_emocional(res["trayectoria"])
-        if fig_tray:
-            st.plotly_chart(fig_tray, use_container_width=True, config={"displayModeBar": False})
+        st.markdown('<div class="glow-card">', unsafe_allow_html=True)
+        fig_t = plot_trayectoria_emocional(res["trayectoria"])
+        if fig_t:
+            st.plotly_chart(fig_t, use_container_width=True, config={"displayModeBar": False})
         else:
-            st.info("Escribe al menos dos oraciones separadas por punto para ver la curva del tono.")
+            st.info("Escribe al menos dos oraciones separadas por punto para graficar la evolución.")
         st.markdown("</div>", unsafe_allow_html=True)
 
-        col_rad, col_bar = st.columns(2)
-        with col_rad:
-            st.markdown('<div class="noir-card">', unsafe_allow_html=True)
-            fig_radar = plot_radar_dimensiones(res)
-            st.plotly_chart(fig_radar, use_container_width=True, config={"displayModeBar": False})
+        r1, r2 = st.columns(2)
+        with r1:
+            st.markdown('<div class="glow-card">', unsafe_allow_html=True)
+            st.plotly_chart(plot_radar_dimensiones(res), use_container_width=True, config={"displayModeBar": False})
             st.markdown("</div>", unsafe_allow_html=True)
-
-        with col_bar:
-            st.markdown('<div class="noir-card">', unsafe_allow_html=True)
-            fig_bar = plot_barras_frecuencia(res["frecuencia"])
-            if fig_bar:
-                st.plotly_chart(fig_bar, use_container_width=True, config={"displayModeBar": False})
+        with r2:
+            st.markdown('<div class="glow-card">', unsafe_allow_html=True)
+            fig_b = plot_barras_frecuencia(res["frecuencia"])
+            if fig_b:
+                st.plotly_chart(fig_b, use_container_width=True, config={"displayModeBar": False})
             else:
-                st.info("No hay suficientes palabras clave para mostrar.")
+                st.info("No hay suficientes palabras clave filtradas.")
             st.markdown("</div>", unsafe_allow_html=True)
 
-    with tab_oraciones:
-        st.markdown("<p style='font-size:0.85rem; color:#9ca3af;'>Detalle de cada frase detectada en el texto:</p>", unsafe_allow_html=True)
+    with tab_f:
+        st.markdown("<p style='font-size:0.85rem; color:#94a3b8;'>Desglose secuencial de cada oración detectada:</p>", unsafe_allow_html=True)
         for item in res["trayectoria"]:
             p = item["polaridad"]
             s = item["subjetividad"]
-            badge_color = "#38bdf8" if p > 0.05 else ("#f43f5e" if p < -0.05 else "#d4af37")
-            badge_icon = "Positiva" if p > 0.05 else ("Negativa" if p < -0.05 else "Neutra")
-            traduccion_frase = traducir_a_idioma(item["es"], target_lang) if target_lang != "es" else item["en"]
+            b_col = "#00f0ff" if p > 0.05 else ("#ff0055" if p < -0.05 else "#ffd700")
+            b_icon = "Positiva" if p > 0.05 else ("Negativa" if p < -0.05 else "Neutra")
+            tr_frase = traducir_a_idioma(item["es"], target_lang) if target_lang != "es" else item["en"]
 
             render_clean_html(
                 f"""
-                <div style="background: #090b10; border: 1px solid rgba(255,255,255,0.06); border-left: 3px solid {badge_color}; border-radius: 4px; padding: 12px; margin-bottom: 8px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-family: 'JetBrains Mono'; margin-bottom: 4px;">
-                        <span style="color: #c5a059;">Oración #{item['idx']}</span>
-                        <span style="color: {badge_color};">{badge_icon} (Sentimiento: {p:+.2f} | Opinión: {s:.2f})</span>
+                <div style="background:rgba(12,15,24,0.9); border:1px solid rgba(255,255,255,0.08); border-left:4px solid {b_col}; border-radius:8px; padding:12px 16px; margin-bottom:8px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-family:'JetBrains Mono'; margin-bottom:4px;">
+                        <span style="color:#ffd700;">Oración #{item['idx']}</span>
+                        <span style="color:{b_col}; font-weight:600;">{b_icon} (Tono: {p:+.2f} | Opinión: {s:.2f})</span>
                     </div>
-                    <div style="font-size: 0.95rem; color: #ffffff; margin-bottom: 4px;">
+                    <div style="font-size:1rem; color:#ffffff; margin-bottom:4px; font-family:'Spectral';">
                         «{item['es']}»
                     </div>
-                    <div style="font-size: 0.8rem; color: #9ca3af; font-family: 'JetBrains Mono';">
-                        Traducción [{target_lang.upper()}]: {traduccion_frase}
+                    <div style="font-size:0.82rem; color:#94a3b8; font-family:'JetBrains Mono';">
+                        🌐 [{target_lang.upper()}]: {tr_frase}
                     </div>
                 </div>
                 """
             )
 
-    with tab_coaching:
-        st.markdown("### Sugerencias prácticas para este texto")
+    with tab_s:
+        st.markdown("### Recomendaciones para mejorar este texto")
         tips = []
         if res["polaridad"] < -0.15:
-            tips.append(("Bajar la hostilidad", "El mensaje tiene una carga negativa alta. Si buscas negociar o resolver un problema, enfócate en pedir soluciones concretas en lugar de solo señalar errores."))
+            tips.append(("Moderar el tono negativo", "El texto contiene alta hostilidad. Si tu meta es negociar o solucionar un desacuerdo, solicita acciones puntuales en vez de solo quejarte."))
         elif res["polaridad"] > 0.4:
-            tips.append(("Aprovechar el buen momento", "El texto transmite mucha energía. Asegúrate de cerrar con una llamada clara a la acción (qué debe hacer el lector ahora)."))
+            tips.append(("Aprovechar el entusiasmo", "Tu mensaje transmite mucha energía. Asegúrate de cerrar con una llamada clara a la acción antes de terminar."))
 
         if res["subjetividad"] > 0.6:
-            tips.append(("Agregar datos concretos", f"El {int(res['subjetividad']*100)}% del texto son opiniones o impresiones. Respaldar tus puntos con números o fechas le dará más peso a tu propuesta."))
+            tips.append(("Sumar datos verificables", f"El {int(res['subjetividad']*100)}% del texto son impresiones u opiniones personales. Acompañar tus afirmaciones con cifras le dará más credibilidad."))
         elif res["subjetividad"] < 0.25:
-            tips.append(("Hacerlo más cercano", "El texto es muy formal y frío. Si vas a hablar con un cliente o equipo, una frase de empatía o contexto personal ayudará a conectar mejor."))
+            tips.append(("Añadir cercanía", "El texto es muy frío y distante. Si buscas conectar con una audiencia amplia, incluye una breve frase humana o de contexto."))
 
         if res["volatilidad"] > 0.4:
-            tips.append(("Suavizar cambios de tono", f"Hay saltos bruscos de emoción entre oraciones ({res['volatilidad']}). Intenta que las transiciones entre tus ideas sean más fluidas."))
+            tips.append(("Estabilizar cambios de ánimo", f"Se observan saltos abruptos de tono ({res['volatilidad']}). Procura que las transiciones entre ideas fluyan mejor."))
 
         if res["diversidad_lexica"] < 40:
-            tips.append(("Cuidar palabras repetidas", f"La variedad de vocabulario es del {res['diversidad_lexica']}%. Usar algunos sinónimos evitará que el texto suene monótono."))
+            tips.append(("Enriquecer el vocabulario", f"Tu variedad léxica es de {res['diversidad_lexica']}%. Sustituir palabras repetidas por sinónimos precisos reforzará tu estilo."))
 
-        for titulo_tip, desc_tip in tips:
+        for t_tit, t_desc in tips:
             render_clean_html(
                 f"""
-                <div style="background: rgba(212, 175, 55, 0.04); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 4px; padding: 14px; margin-bottom: 10px;">
-                    <div style="font-family: 'Spectral'; font-size: 1rem; color: #d4af37; font-weight: 600; margin-bottom: 2px;">
-                        {titulo_tip}
+                <div style="background:rgba(255,215,0,0.05); border:1px solid rgba(255,215,0,0.25); border-radius:8px; padding:14px; margin-bottom:10px;">
+                    <div style="font-family:'Spectral'; font-size:1.05rem; color:#ffd700; font-weight:700; margin-bottom:2px;">
+                        {t_tit}
                     </div>
-                    <div style="font-size: 0.9rem; color: #e2e8f0; line-height: 1.5;">
-                        {desc_tip}
+                    <div style="font-size:0.92rem; color:#e2e8f0; line-height:1.5;">
+                        {t_desc}
                     </div>
                 </div>
                 """
             )
 else:
-    st.info("Escribe algo en el cuadro de texto o elige un ejemplo arriba para ver el análisis.")
-
-with st.sidebar:
-    st.markdown("### ¿Cómo se calculan estos datos?")
-    st.markdown(
-        """
-        - **Sentimiento:** Califica de -1 (muy negativo) a +1 (muy positivo).
-        - **Subjetividad:** De 0% (datos comprobables) a 100% (opiniones personales).
-        - **Variación de ánimo:** Qué tanto cambia el tono de una frase a la siguiente.
-        - **Variedad de palabras:** Porcentaje de palabras distintas sobre el total escrito.
-        """
-    )
+    st.info("Escribe un texto arriba o pulsa uno de los ejemplos para iniciar la evaluación.")
