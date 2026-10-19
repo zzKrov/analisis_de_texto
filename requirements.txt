@@ -6,4 +6,3 @@ deep-translator>=1.11.4
 googletrans==4.0.0-rc1
 requests>=2.31.0
 numpy
-textblob
