@@ -4,6 +4,7 @@ import math
 import numpy as np
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 import plotly.graph_objects as go
 
 # ============================================================
@@ -17,25 +18,18 @@ st.set_page_config(
 )
 
 # ============================================================
-# ESTILOS VISUALES: FONDO LÍQUIDO ORO VISIBLE Y BOTONES CON GLOW
+# ESTILOS VISUALES Y FONDO FLUIDO SOLAR ANIMADO (GPU)
 # ============================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
 
-/* Fondo animado líquido visible aplicado sobre el contenedor de Streamlit */
-[data-testid="stAppViewContainer"] {
-    background: linear-gradient(135deg, #05060a 0%, #171206 35%, #080a12 70%, #05060a 100%) !important;
-    background-size: 300% 300% !important;
-    animation: goldFluidFlow 14s ease infinite alternate !important;
+html, body, [data-testid="stAppViewContainer"], .stApp, section.main, .block-container {
+    background: transparent !important;
+    background-color: transparent !important;
     color: #f1f5f9 !important;
     font-family: 'Spectral', Georgia, serif !important;
-}
-
-@keyframes goldFluidFlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    overflow-x: hidden;
 }
 
 [data-testid="stHeader"] { background: transparent !important; }
@@ -45,34 +39,34 @@ st.markdown("""
     text-align: center;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.18em;
     color: #ffd700;
     text-transform: uppercase;
 }
 
 .main-title {
-    font-size: 2.3rem;
+    font-size: 2.2rem;
     font-weight: 700;
     text-align: center;
     color: #ffffff;
     margin-bottom: 0.2rem;
-    text-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+    text-shadow: 0 0 25px rgba(255, 215, 0, 0.35);
 }
 
 .sub-lead {
     text-align: center;
     color: #94a3b8;
     font-size: 0.95rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.4rem;
 }
 
-/* Tarjetas interactivas con resplandor en hover */
+/* Tarjetas KPI con resplandor en hover */
 .kpi-card {
     background: rgba(13, 16, 26, 0.88);
     border: 1px solid rgba(255, 215, 0, 0.25);
     border-top: 3px solid #ffd700;
     border-radius: 8px;
-    padding: 18px;
+    padding: 16px;
     text-align: center;
     backdrop-filter: blur(14px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
@@ -80,12 +74,11 @@ st.markdown("""
 }
 
 .kpi-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     border-color: #ffd700;
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), inset 0 0 15px rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.45), inset 0 0 15px rgba(255, 215, 0, 0.1);
 }
 
-/* Botones con animación, escala y brillo en hover */
 div.stButton > button {
     border-radius: 6px !important;
     font-family: 'JetBrains Mono', monospace !important;
@@ -108,28 +101,93 @@ div.stButton > button:hover {
     background: rgba(255, 215, 0, 0.05);
     border: 1px solid rgba(255, 215, 0, 0.25);
     border-radius: 8px;
-    padding: 16px;
+    padding: 14px;
     margin-bottom: 10px;
     line-height: 1.6;
 }
 </style>
 """, unsafe_allow_html=True)
 
+# ------------------------------------------------------------
+# FONDO FLUIDO SOLAR ANIMADO EN GPU
+# ------------------------------------------------------------
+components.html(
+    """
+    <script>
+    (function() {
+        const pWin = window.parent;
+        const pDoc = pWin.document;
+
+        if (pWin.__TONE_BG_ACTIVE__) return;
+        pWin.__TONE_BG_ACTIVE__ = true;
+
+        let canvas = pDoc.getElementById('solar-lava-canvas');
+        if (!canvas) {
+            canvas = pDoc.createElement('canvas');
+            canvas.id = 'solar-lava-canvas';
+            canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:0;background:#05060a;';
+            pDoc.body.prepend(canvas);
+        }
+
+        const ctx = canvas.getContext('2d');
+        let w = canvas.width = pWin.innerWidth;
+        let h = canvas.height = pWin.innerHeight;
+
+        pWin.addEventListener('resize', () => {
+            w = canvas.width = pWin.innerWidth;
+            h = canvas.height = pWin.innerHeight;
+        });
+
+        const blobs = [
+            { x: w * 0.2, y: h * 0.25, r: 260, vx: 0.5, vy: 0.4, color: 'rgba(255, 215, 0, 0.14)' },
+            { x: w * 0.8, y: h * 0.35, r: 290, vx: -0.4, vy: 0.5, color: 'rgba(255, 136, 0, 0.12)' },
+            { x: w * 0.4, y: h * 0.75, r: 270, vx: 0.4, vy: -0.5, color: 'rgba(0, 240, 255, 0.08)' }
+        ];
+
+        function animate() {
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = '#05060a';
+            ctx.fillRect(0, 0, w, h);
+            ctx.globalCompositeOperation = 'screen';
+
+            for (let b of blobs) {
+                b.x += b.vx; b.y += b.vy;
+                if (b.x < -100 || b.x > w + 100) b.vx *= -1;
+                if (b.y < -100 || b.y > h + 100) b.vy *= -1;
+
+                const grad = ctx.createRadialGradient(b.x, b.y, b.r * 0.05, b.x, b.y, b.r);
+                grad.addColorStop(0, b.color);
+                grad.addColorStop(1, 'transparent');
+
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            requestAnimationFrame(animate);
+        }
+        animate();
+    })();
+    </script>
+    """,
+    height=0,
+    width=0
+)
+
 # ============================================================
-# MOTOR LÉXICO NATIVO EN ESPAÑOL (ANÁLISIS REAL SIN 0.00)
+# MOTOR LÉXICO NATIVO EN ESPAÑOL
 # ============================================================
 LEXICO_ES = {
     "extraordinario": 0.9, "excelente": 0.85, "increíble": 0.85, "triunfo": 0.8,
     "éxito": 0.8, "victoria": 0.8, "logramos": 0.7, "superamos": 0.7, "talento": 0.6,
     "constancia": 0.6, "dedicación": 0.6, "entusiasmo": 0.75, "conquistar": 0.6,
     "felicitaciones": 0.8, "maravilloso": 0.85, "genial": 0.75, "acertada": 0.6,
-    "agradecido": 0.65, "alegría": 0.7, "óptimo": 0.7, "eficaz": 0.6, "feliz": 0.75,
     "pésimo": -0.9, "grosero": -0.85, "inaceptable": -0.85, "decepcionado": -0.8,
     "molesto": -0.75, "defectuoso": -0.7, "evasivas": -0.65, "retraso": -0.6,
     "frustración": -0.7, "inconvenientes": -0.5, "negativo": -0.6, "caída": -0.5,
     "fallos": -0.6, "desastre": -0.85, "terrible": -0.8, "enojo": -0.75, "rabia": -0.8,
-    "daño": -0.6, "error": -0.5, "lamentamos": -0.45, "peor": -0.7, "malo": -0.5,
-    "inútil": -0.7, "injusto": -0.75
+    "daño": -0.6, "error": -0.5, "lamentamos": -0.45, "peor": -0.7, "malo": -0.5
 }
 
 INTENSIFICADORES = {"muy": 1.4, "sumamente": 1.6, "profundamente": 1.5, "enormemente": 1.5, "totalmente": 1.3}
@@ -148,8 +206,8 @@ def analizar_sentimiento_es(texto: str):
     frases = [f.strip() for f in re.split(r"[.!?]+", texto) if len(f.strip()) > 3]
     trayectoria = []
 
-    for idx, f in enumerate(frases, 1):
-        palabras_f = re.findall(r"\b\w+\b", f.lower())
+    for idx, frase in enumerate(frases, 1):
+        palabras_f = re.findall(r"\b\w+\b", frase.lower())
         pol_f = 0.0
         conteo_f = 0
 
@@ -158,8 +216,6 @@ def analizar_sentimiento_es(texto: str):
             if i > 0 and palabras_f[i-1] in INTENSIFICADORES:
                 mult *= INTENSIFICADORES[palabras_f[i-1]]
             if i > 0 and palabras_f[i-1] in NEGADORES:
-                mult *= -1.0
-            elif i > 1 and palabras_f[i-2] in NEGADORES:
                 mult *= -1.0
 
             if p in LEXICO_ES:
@@ -171,9 +227,9 @@ def analizar_sentimiento_es(texto: str):
         puntuacion_total += pol_f
         palabras_evaluadas += conteo_f
         media_f = round(max(-1.0, min(1.0, pol_f / max(1, conteo_f))), 2) if conteo_f > 0 else 0.0
-        trayectoria.append({"idx": idx, "frase": f, "pol": media_f})
+        trayectoria.append({"idx": idx, "frase": frase, "pol": media_f})
 
-    polaridad = round(max(-1.0, min(1.0, puntuacion_total / max(1, palabras_evaluadas))), 2) if palabras_evaluadas > 0 else 0.0
+    polaridad = round(max(-1.0, min(1.0, puntuacion_total / palabras_evaluadas)), 2) if palabras_evaluadas > 0 else 0.0
     subjetividad = round(min(1.0, (carga_subjetiva * 3.5) / max(1, total_w)), 2)
     unicas_w = len(set(palabras))
     diversidad = round((unicas_w / max(1, total_w)) * 100, 1)
@@ -181,29 +237,13 @@ def analizar_sentimiento_es(texto: str):
     return polaridad, subjetividad, total_w, diversidad, trayectoria
 
 # ============================================================
-# TEXTOS PREPARADOS EXTENSOS Y VARIADOS
+# PRESETS RICOS CON TEXTOS EXTENSOS
 # ============================================================
 PRESETS = {
-    "pitch": (
-        "¡Equipo, logramos un resultado extraordinario este trimestre! Superamos con creces todas las proyecciones "
-        "gracias a la constancia, el talento y la dedicación incansable de cada integrante. Esta victoria confirma "
-        "nuestra visión estratégica y nos impulsa con enorme entusiasmo a conquistar nuevos mercados."
-    ),
-    "reclamo": (
-        "Estoy sumamente molesto y decepcionado con el servicio recibido. Llevo tres semanas esperando una respuesta concreta "
-        "y la única atención que brindan son evasivas y respuestas automatizadas inaceptables. El producto llegó defectuoso, "
-        "nadie se hace responsable y el trato de su personal fue grosero y pésimo. Exijo una solución inmediata y el reembolso íntegro."
-    ),
-    "tecnico": (
-        "El microservicio procesa eventos mediante una cola asíncrona distribuida en tres nodos redundantes. "
-        "La latencia promedio registrada se sitúa en catorce milisegundos bajo una carga constante de setenta por ciento. "
-        "Las copias de seguridad de los registros se ejecutan automáticamente cada cuatro horas."
-    ),
-    "crisis": (
-        "Reconocemos el impacto negativo originado por la caída de los servidores durante las primeras horas de hoy. "
-        "Entendemos la frustración y los inconvenientes causados a las operaciones de nuestros usuarios. Nuestro equipo técnico "
-        "activó de inmediato el plan de contingencia para mitigar los daños y continuará trabajando hasta restablecer el servicio."
-    )
+    "pitch": "¡Equipo, logramos un resultado extraordinario este trimestre! Superamos con creces todas las proyecciones gracias al talento y dedicación incansable de cada integrante.",
+    "reclamo": "Estoy sumamente molesto y decepcionado con el servicio recibido. Llevo tres semanas esperando una respuesta y la atención es pésima e inaceptable.",
+    "tecnico": "El microservicio procesa eventos mediante una cola asíncrona distribuida en tres nodos redundantes con latencia promedio de catorce milisegundos.",
+    "crisis": "Reconocemos el impacto negativo originado por la caída de los servidores. Entendemos la frustración y activamos de inmediato el plan de contingencia."
 }
 
 if "texto_activo" not in st.session_state:
@@ -211,7 +251,7 @@ if "texto_activo" not in st.session_state:
 
 st.markdown('<div class="brand-signature">Krov Industries · Analítica Semántica</div>', unsafe_allow_html=True)
 st.markdown('<div class="main-title">Analizador de Tono y Emociones</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-lead">Diagnóstico objetivo de actitud, carga emocional y coherencia del discurso</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-lead">Medición rigurosa de polaridad afectiva, objetividad y estructura del discurso</div>', unsafe_allow_html=True)
 
 c1, c2, c3, c4 = st.columns(4)
 with c1:
@@ -231,7 +271,7 @@ with c4:
         st.session_state.texto_activo = PRESETS["crisis"]
         st.rerun()
 
-texto_input = st.text_area("Texto a evaluar:", value=st.session_state.texto_activo, height=130)
+texto_input = st.text_area("Texto a evaluar:", value=st.session_state.texto_activo, height=120)
 
 if st.button("Analizar Tono y Emociones", use_container_width=True):
     prog = st.progress(0, text="Procesando sintaxis y valencias en español...")
@@ -242,6 +282,89 @@ if st.button("Analizar Tono y Emociones", use_container_width=True):
 
 if "analisis_hecho" in st.session_state and texto_input.strip():
     pol, subj, total_w, diversidad, trayectoria = st.session_state.analisis_hecho
+
+    # GASÓMETROS ANIMADOS HTML5/CANVAS CON ESCALADO NUMÉRICO Y HOVER GLOW
+    gasometros_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <style>
+    body {{
+        margin: 0; background: transparent; font-family: 'JetBrains Mono', monospace;
+        display: flex; justify-content: center; gap: 24px; padding: 10px;
+    }}
+    .gauge-card {{
+        background: rgba(14, 16, 26, 0.88); border: 1px solid rgba(255, 215, 0, 0.25);
+        border-radius: 10px; padding: 18px 24px; text-align: center; width: 280px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.6); transition: all 0.3s ease;
+    }}
+    .gauge-card:hover {{
+        border-color: #ffd700; transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.45);
+    }}
+    .label {{ font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; }}
+    .number {{ font-family: Georgia, serif; font-size: 42px; font-weight: 700; line-height: 1; }}
+    .bar-bg {{ width: 100%; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 12px; }}
+    .bar-fill {{ height: 100%; width: 0%; border-radius: 4px; transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1); }}
+    </style>
+    </head>
+    <body>
+    <div class="gauge-card">
+        <div class="label">Polaridad Afectiva</div>
+        <div class="number" id="num-pol" style="color:{'#00ff88' if pol > 0.05 else ('#ff3344' if pol < -0.05 else '#ffd700')};">0.00</div>
+        <div class="bar-bg">
+            <div id="bar-pol" class="bar-fill" style="background:{'#00ff88' if pol > 0.05 else ('#ff3344' if pol < -0.05 else '#ffd700')};"></div>
+        </div>
+    </div>
+
+    <div class="gauge-card">
+        <div class="label">Subjetividad / Emoción</div>
+        <div class="number" id="num-subj" style="color:#38bdf8;">0%</div>
+        <div class="bar-bg">
+            <div id="bar-subj" class="bar-fill" style="background:#38bdf8;"></div>
+        </div>
+    </div>
+
+    <script>
+    const targetPol = {pol};
+    const targetSubj = {int(subj * 100)};
+
+    let currentPol = 0.0;
+    const stepPol = targetPol / 40;
+    let countPol = 0;
+    const intervalPol = setInterval(() => {{
+        countPol++;
+        currentPol += stepPol;
+        if (countPol >= 40) {{
+            currentPol = targetPol;
+            clearInterval(intervalPol);
+        }}
+        document.getElementById('num-pol').innerText = (currentPol >= 0 ? '+' : '') + currentPol.toFixed(2);
+    }}, 25);
+
+    let currentSubj = 0;
+    const stepSubj = targetSubj / 40;
+    let countSubj = 0;
+    const intervalSubj = setInterval(() => {{
+        countSubj++;
+        currentSubj += stepSubj;
+        if (countSubj >= 40) {{
+            currentSubj = targetSubj;
+            clearInterval(intervalSubj);
+        }}
+        document.getElementById('num-subj').innerText = Math.round(currentSubj) + '%';
+    }}, 25);
+
+    setTimeout(() => {{
+        const polPercent = Math.max(5, Math.min(100, Math.round(((targetPol + 1.0) / 2.0) * 100)));
+        document.getElementById('bar-pol').style.width = polPercent + '%';
+        document.getElementById('bar-subj').style.width = Math.max(5, targetSubj) + '%';
+    }}, 80);
+    </script>
+    </body>
+    </html>
+    """
+    components.html(gasometros_html, height=140)
 
     st.write("")
     k1, k2, k3, k4 = st.columns(4)
@@ -256,44 +379,7 @@ if "analisis_hecho" in st.session_state and texto_input.strip():
         st.markdown(f'<div class="kpi-card"><div style="font-size:0.7rem; color:#94a3b8;">SUBJETIVIDAD</div><div style="font-size:2rem; font-weight:700; color:#38bdf8;">{int(subj*100)}%</div></div>', unsafe_allow_html=True)
 
     st.write("")
-    tab_graficos, tab_frases, tab_sug = st.tabs(["Velocímetros y Radar", "Trayectoria por Frase", "Sugerencias de Estilo"])
-
-    with tab_graficos:
-        g1, g2 = st.columns(2)
-        with g1:
-            fig_pol = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=pol,
-                title={"text": "Polaridad (-1 Negativo a +1 Positivo)"},
-                gauge={
-                    "axis": {"range": [-1, 1]},
-                    "bar": {"color": "#ffd700"},
-                    "steps": [
-                        {"range": [-1, -0.15], "color": "rgba(239, 68, 68, 0.35)"},
-                        {"range": [-0.15, 0.15], "color": "rgba(148, 163, 184, 0.35)"},
-                        {"range": [0.15, 1], "color": "rgba(16, 185, 129, 0.35)"}
-                    ]
-                }
-            ))
-            fig_pol.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)", font={"color": "#f1f5f9"})
-            st.plotly_chart(fig_pol, use_container_width=True)
-
-        with g2:
-            fig_subj = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=subj,
-                title={"text": "Subjetividad (0 Objetivo a 1 Opinión)"},
-                gauge={
-                    "axis": {"range": [0, 1]},
-                    "bar": {"color": "#38bdf8"},
-                    "steps": [
-                        {"range": [0, 0.35], "color": "rgba(14, 165, 233, 0.25)"},
-                        {"range": [0.35, 1], "color": "rgba(168, 85, 247, 0.35)"}
-                    ]
-                }
-            ))
-            fig_subj.update_layout(height=240, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="rgba(0,0,0,0)", font={"color": "#f1f5f9"})
-            st.plotly_chart(fig_subj, use_container_width=True)
+    tab_frases, tab_sug = st.tabs(["Trayectoria por Frase", "Diagnóstico de Estilo"])
 
     with tab_frases:
         if trayectoria:
@@ -304,8 +390,8 @@ if "analisis_hecho" in st.session_state and texto_input.strip():
             ))
             fig_t.add_hline(y=0, line_dash="dash", line_color="rgba(255,255,255,0.3)")
             fig_t.update_layout(
-                title="Evolución Emocional por Frase", height=230,
-                xaxis_title="Frase", yaxis_title="Tono (-1 a +1)",
+                title="Evolución del Sentimiento por Frase", height=220,
+                xaxis_title="Frase", yaxis_title="Polaridad (-1 a +1)",
                 margin=dict(l=30, r=20, t=40, b=30), paper_bgcolor="rgba(0,0,0,0)",
                 plot_bgcolor="rgba(12,16,28,0.7)", font={"color": "#94a3b8"}
             )
@@ -315,13 +401,8 @@ if "analisis_hecho" in st.session_state and texto_input.strip():
     with tab_sug:
         st.markdown("#### Recomendaciones de redacción")
         if pol < -0.15:
-            st.markdown('<div class="advice-card"><b>Tono confrontacional o de reclamo:</b> Se detecta fuerte descontento. En ámbitos profesionales o de negociación, enfoca el mensaje en peticiones y soluciones concretas.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="advice-card"><b>Tono de reclamo o disconformidad:</b> Se detecta descontento. En ámbitos profesionales, enfoca el mensaje en peticiones concretas.</div>', unsafe_allow_html=True)
         elif pol > 0.35:
-            st.markdown('<div class="advice-card"><b>Tono motivador o pitch:</b> Nivel de energía muy favorable. Asegúrate de cerrar con una llamada clara a la acción para aprovechar el entusiasmo.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="advice-card"><b>Tono entusiasta y motivador:</b> Excelente nivel de energía positiva. Asegúrate de incluir llamadas claras a la acción.</div>', unsafe_allow_html=True)
         else:
-            st.markdown('<div class="advice-card"><b>Tono neutro u operativo:</b> El texto se mantiene apegado a hechos y procedimientos. Óptimo para informes técnicos y documentación.</div>', unsafe_allow_html=True)
-
-        if subj > 0.6:
-            st.markdown('<div class="advice-card"><b>Alta carga subjetiva:</b> El texto depende en gran medida de impresiones personales. Apoyar las aseveraciones con datos aumentará la credibilidad.</div>', unsafe_allow_html=True)
-        elif subj < 0.25:
-            st.markdown('<div class="advice-card"><b>Redacción objetiva y formal:</b> No se percibe sesgo afectivo personal.</div>', unsafe_allow_html=True)
+            st.markdown('<div class="advice-card"><b>Tono neutral u objetivo:</b> El mensaje se mantiene enfocado en hechos sin sesgo emocional marcado.</div>', unsafe_allow_html=True)
